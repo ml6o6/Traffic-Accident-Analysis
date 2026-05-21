@@ -2,8 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
-from .db import Base, engine
-from . import models 
+from . import models  # noqa: F401 — регистрируем модели для Alembic
 from .routers import cars, drivers, accidents
 
 
@@ -22,8 +21,6 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-
-    Base.metadata.create_all(bind=engine)
 
     api_prefix = "/api"
     app.include_router(cars.router, prefix=api_prefix)

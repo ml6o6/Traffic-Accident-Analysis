@@ -1,7 +1,11 @@
 from fastapi import HTTPException
+from sqlalchemy import update
 from sqlalchemy.orm import Session
 
 from ..models.car import Car
+from ..models.driver import Driver
+from ..models.accident import Accident
+from ..models.accident_car import AccidentCar
 from ..schemas.car import CarCreate, CarUpdate
 
 
@@ -39,19 +43,36 @@ def create_car(db: Session, payload: CarCreate) -> Car:
 
 def update_car(db: Session, car_id: int, payload: CarUpdate) -> Car:
     car = get_car(db, car_id)
-    patch = payload.model_dump(exclude_unset=True)
-    if "reg_number" in patch and patch["reg_number"] != car.reg_number:
-        existing = (
-            db.query(Car)
-            .filter(Car.reg_number == patch["reg_number"], Car.id != car_id)
-            .first()
-        )
-        if existing:
+    data = payload.model_dump(exclude_unset=True)
+
+    new_reg = data.get("reg_number")
+    old_reg = car.reg_number
+
+    if new_reg and new_reg != old_reg:
+        if db.query(Car).filter(Car.reg_number == new_reg, Car.id != car_id).first():
             raise HTTPException(
                 status_code=400,
-                detail=f"Авто с гос. номером «{patch['reg_number']}» уже существует",
+                detail=f"Авто с гос. номером «{new_reg}» уже существует",
             )
-    for field, value in patch.items():
+        new_car = Car(
+            brand_company=data.get("brand_company", car.brand_company),
+            brand_model=data.get("brand_model", car.brand_model),
+            body_type=data.get("body_type", car.body_type),
+            reg_number=new_reg,
+        )
+        db.add(new_car)
+        db.flush()
+
+        db.execute(update(Driver).where(Driver.car_reg_number == old_reg).values(car_reg_number=new_reg))
+        db.execute(update(Accident).where(Accident.car_reg_number == old_reg).values(car_reg_number=new_reg))
+        db.execute(update(AccidentCar).where(AccidentCar.car_reg_number == old_reg).values(car_reg_number=new_reg))
+
+        db.delete(car)
+        db.commit()
+        db.refresh(new_car)
+        return new_car
+
+    for field, value in data.items():
         setattr(car, field, value)
     db.commit()
     db.refresh(car)
@@ -60,5 +81,22 @@ def update_car(db: Session, car_id: int, payload: CarUpdate) -> Car:
 
 def delete_car(db: Session, car_id: int) -> None:
     car = get_car(db, car_id)
+
+    if db.query(Driver).filter(Driver.car_reg_number == car.reg_number).first():
+        raise HTTPException(
+            status_code=400,
+            detail="Нельзя удалить автомобиль: за ним закреплён хотя бы один водитель",
+        )
+    if db.query(Accident).filter(Accident.car_reg_number == car.reg_number).first():
+        raise HTTPException(
+            status_code=400,
+            detail="Нельзя удалить автомобиль: на него ссылаются акты ДТП",
+        )
+    if db.query(AccidentCar).filter(AccidentCar.car_reg_number == car.reg_number).first():
+        raise HTTPException(
+            status_code=400,
+            detail="Нельзя удалить автомобиль: он указан как участник ДТП",
+        )
+
     db.delete(car)
     db.commit()

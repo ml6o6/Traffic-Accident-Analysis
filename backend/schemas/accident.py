@@ -38,7 +38,8 @@ class AccidentBase(BaseModel):
 
 
 class AccidentCreate(AccidentBase):
-    pass
+    # Список гос. номеров всех машин-участников (М:N через accident_cars)
+    car_reg_numbers: list[str] = Field(default_factory=list)
 
 
 class AccidentUpdate(BaseModel):
@@ -53,8 +54,39 @@ class AccidentUpdate(BaseModel):
     victims_count: int | None = Field(None, ge=0)
     accident_type: AccidentType | None = None
     accident_cause: AccidentCause | None = None
+    car_reg_numbers: list[str] | None = None
 
 
 class AccidentResponse(AccidentBase):
     id: int
+    # Расширение AccidentBase: дополнительно возвращаем все машины-участники
+    cars: list[str] = []
     model_config = {"from_attributes": True}
+
+
+class AccidentListItem(BaseModel):
+    """Облегчённый ответ для списочного отображения (с ФИО водителя)."""
+    id: int
+    act_number: str
+    accident_date: date
+    location: str
+    accident_type: str
+    accident_cause: str
+    victims_count: int
+    driver_id: int
+    driver_name: str | None = None
+    car_reg_number: str | None = None
+
+
+class AccidentMapPoint(BaseModel):
+    """Минимальная информация о ДТП для отображения на карте."""
+    id: int
+    lat: float
+    lon: float
+    accident_type: str
+    accident_cause: str
+    accident_date: date
+    location: str
+    victims_count: int
+    driver_name: str | None = None
+    car_reg_number: str | None = None

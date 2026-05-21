@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Date, Float, ForeignKey
+from sqlalchemy.orm import relationship
 
 from ..db import Base
 
@@ -18,3 +19,16 @@ class Accident(Base):
     victims_count = Column(Integer, nullable=False, default=0)
     accident_type = Column(String(64), nullable=False)
     accident_cause = Column(String(128), nullable=False)
+
+    # Связь со списком автомобилей-участников через таблицу accident_cars
+    car_links = relationship(
+        "AccidentCar",
+        back_populates="accident",
+        cascade="all, delete-orphan",
+    )
+
+    # Удобный геттер водителя (для эндпойнтов с расширенным ответом)
+    driver = relationship(
+        "Driver",
+        foreign_keys=[driver_id],
+    )

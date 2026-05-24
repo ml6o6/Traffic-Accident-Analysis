@@ -2,6 +2,8 @@ from datetime import date
 import random
 
 from .db import SessionLocal
+from .dependencies.auth import hash_password
+from .models.user import User, UserRole
 from .models.car import Car
 from .models.driver import Driver
 from .models.accident import Accident
@@ -50,6 +52,23 @@ CAUSES = [
 def seed() -> None:
     db = SessionLocal()
     try:
+        # --- USERS ---
+        if not db.query(User).filter(User.username == "admin").first():
+            db.add(User(
+                username="admin",
+                password_hash=hash_password("admin123"),
+                role=UserRole.admin,
+                is_active=True,
+            ))
+        if not db.query(User).filter(User.username == "user").first():
+            db.add(User(
+                username="user",
+                password_hash=hash_password("user123"),
+                role=UserRole.user,
+                is_active=True,
+            ))
+        db.commit()
+
         # --- CARS ---
         cars: list[Car] = []
         for company, model, body, reg in CAR_DATA:
@@ -118,7 +137,7 @@ def seed() -> None:
                 db.add(AccidentCar(accident_id=acc.id, car_reg_number=extra_car.reg_number))
 
         db.commit()
-        print("Seed выполнен: автомобили, водители и 15 актов ДТП созданы.")
+        print("Seed выполнен: пользователи admin/user, авто, водители и 15 актов ДТП созданы.")
     finally:
         db.close()
 

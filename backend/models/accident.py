@@ -27,7 +27,6 @@ class Accident(Base):
         cascade="all, delete-orphan",
     )
 
-    # Удобный геттер водителя (для эндпойнтов с расширенным ответом)
     driver = relationship(
         "Driver",
         foreign_keys=[driver_id],

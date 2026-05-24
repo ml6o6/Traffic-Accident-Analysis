@@ -6,6 +6,11 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str = "postgresql+psycopg://postgres:postgres@localhost:5432/dtp_db"
 
+    # Подпись JWT-токенов.
+    SECRET_KEY: str = "change-me-in-production-please"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 480
+
     CORS_ORIGINS: list[str] = [
         "http://localhost:5173",
         "http://127.0.0.1:5173",

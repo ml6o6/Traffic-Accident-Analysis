@@ -12,6 +12,7 @@ from ..schemas.accident import (
     AccidentMapPoint,
 )
 from ..services import accident_service
+from ..dependencies.auth import get_current_user, require_admin
 
 router = APIRouter(prefix="/accidents", tags=["accidents"])
 
@@ -57,6 +58,7 @@ def list_accidents(
     accident_cause: str | None = None,
     location: str | None = None,
     db: Session = Depends(get_db),
+    _=Depends(get_current_user),
 ):
     rows = accident_service.list_accidents(
         db, date_from, date_to, accident_type, accident_cause, location
@@ -71,32 +73,40 @@ def get_map_points(
     accident_type: str | None = None,
     location: str | None = None,
     db: Session = Depends(get_db),
+    _=Depends(get_current_user),
 ):
     return accident_service.map_points(db, date_from, date_to, accident_type, location)
 
 
 @router.get("/{accident_id}", response_model=AccidentResponse)
-def get_accident(accident_id: int, db: Session = Depends(get_db)):
+def get_accident(accident_id: int, db: Session = Depends(get_db), _=Depends(get_current_user)):
     a = accident_service.get_accident(db, accident_id)
     cars = accident_service.cars_of_accident(db, a)
     return _to_response(a, cars)
 
 
 @router.post("", response_model=AccidentResponse, status_code=201)
-def create_accident(payload: AccidentCreate, db: Session = Depends(get_db)):
+def create_accident(
+    payload: AccidentCreate, db: Session = Depends(get_db), _=Depends(require_admin)
+):
     a = accident_service.create_accident(db, payload)
     cars = accident_service.cars_of_accident(db, a)
     return _to_response(a, cars)
 
 
 @router.put("/{accident_id}", response_model=AccidentResponse)
-def update_accident(accident_id: int, payload: AccidentUpdate, db: Session = Depends(get_db)):
+def update_accident(
+    accident_id: int,
+    payload: AccidentUpdate,
+    db: Session = Depends(get_db),
+    _=Depends(require_admin),
+):
     a = accident_service.update_accident(db, accident_id, payload)
     cars = accident_service.cars_of_accident(db, a)
     return _to_response(a, cars)
 
 
 @router.delete("/{accident_id}", status_code=204)
-def delete_accident(accident_id: int, db: Session = Depends(get_db)):
+def delete_accident(accident_id: int, db: Session = Depends(get_db), _=Depends(require_admin)):
     accident_service.delete_accident(db, accident_id)
     return None

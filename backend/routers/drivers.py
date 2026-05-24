@@ -4,31 +4,45 @@ from sqlalchemy.orm import Session
 from ..db import get_db
 from ..schemas.driver import DriverCreate, DriverUpdate, DriverResponse
 from ..services import driver_service
+from ..dependencies.auth import get_current_user, require_admin
 
 router = APIRouter(prefix="/drivers", tags=["drivers"])
 
 
 @router.get("", response_model=list[DriverResponse])
-def list_drivers(search: str | None = None, db: Session = Depends(get_db)):
+def list_drivers(
+    search: str | None = None,
+    db: Session = Depends(get_db),
+    _=Depends(get_current_user),
+):
     return driver_service.list_drivers(db, search)
 
 
 @router.get("/{driver_id}", response_model=DriverResponse)
-def get_driver(driver_id: int, db: Session = Depends(get_db)):
+def get_driver(driver_id: int, db: Session = Depends(get_db), _=Depends(get_current_user)):
     return driver_service.get_driver(db, driver_id)
 
 
 @router.post("", response_model=DriverResponse, status_code=201)
-def create_driver(payload: DriverCreate, db: Session = Depends(get_db)):
+def create_driver(
+    payload: DriverCreate,
+    db: Session = Depends(get_db),
+    _=Depends(require_admin),
+):
     return driver_service.create_driver(db, payload)
 
 
 @router.put("/{driver_id}", response_model=DriverResponse)
-def update_driver(driver_id: int, payload: DriverUpdate, db: Session = Depends(get_db)):
+def update_driver(
+    driver_id: int,
+    payload: DriverUpdate,
+    db: Session = Depends(get_db),
+    _=Depends(require_admin),
+):
     return driver_service.update_driver(db, driver_id, payload)
 
 
 @router.delete("/{driver_id}", status_code=204)
-def delete_driver(driver_id: int, db: Session = Depends(get_db)):
+def delete_driver(driver_id: int, db: Session = Depends(get_db), _=Depends(require_admin)):
     driver_service.delete_driver(db, driver_id)
     return None

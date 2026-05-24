@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
 from . import models  # noqa: F401 — регистрируем модели для Alembic
-from .routers import cars, drivers, accidents
+from .routers import auth, users, cars, drivers, accidents
 
 
 def create_app() -> FastAPI:
@@ -23,6 +23,8 @@ def create_app() -> FastAPI:
     )
 
     api_prefix = "/api"
+    app.include_router(auth.router, prefix=api_prefix)
+    app.include_router(users.router, prefix=api_prefix)
     app.include_router(cars.router, prefix=api_prefix)
     app.include_router(drivers.router, prefix=api_prefix)
     app.include_router(accidents.router, prefix=api_prefix)

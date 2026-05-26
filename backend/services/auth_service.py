@@ -31,7 +31,8 @@ def authenticate(db: Session, username: str, password: str) -> Token:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Неверный логин или пароль",
         )
-    token = create_access_token(subject=user.username, role=user.role.value)
+    # role хранится строкой; передаём как есть (без .value, т.к. это не Enum в БД)
+    token = create_access_token(subject=user.username, role=user.role)
     return Token(access_token=token, user=UserPublic.model_validate(user))
 
 

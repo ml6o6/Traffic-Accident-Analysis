@@ -38,9 +38,8 @@ def get_accident(db: Session, accident_id: int) -> Accident:
         raise HTTPException(status_code=404, detail="Акт ДТП не найден")
     return a
 
-
+#Список гос номеров всех машин-участников акта accident_cars
 def cars_of_accident(db: Session, accident: Accident) -> list[str]:
-    """Список гос. номеров всех машин-участников акта (через accident_cars)."""
     rows = (
         db.query(AccidentCar.car_reg_number)
         .filter(AccidentCar.accident_id == accident.id)
@@ -77,7 +76,7 @@ def create_accident(db: Session, payload: AccidentCreate) -> Accident:
         )
     _validate_refs(db, payload.driver_id, payload.car_reg_number, payload.car_reg_numbers)
 
-    data = payload.model_dump(mode="json", exclude={"car_reg_numbers"})
+    data = payload.model_dump(exclude={"car_reg_numbers"})
     accident = Accident(**data)
     db.add(accident)
     db.flush()
@@ -93,7 +92,7 @@ def create_accident(db: Session, payload: AccidentCreate) -> Accident:
 
 def update_accident(db: Session, accident_id: int, payload: AccidentUpdate) -> Accident:
     accident = get_accident(db, accident_id)
-    data = payload.model_dump(exclude_unset=True, mode="json")
+    data = payload.model_dump(exclude_unset=True)
 
     cars_list = data.pop("car_reg_numbers", None)
 

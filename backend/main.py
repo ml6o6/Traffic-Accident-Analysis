@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
 from . import models  # модели для Alembic
-from .routers import auth, users, cars, drivers, accidents, stats
+from .routers import auth, users, cars, drivers, accidents, stats, reports
 
 
 def create_app() -> FastAPI:
@@ -29,6 +29,7 @@ def create_app() -> FastAPI:
     app.include_router(drivers.router, prefix=api_prefix)
     app.include_router(accidents.router, prefix=api_prefix)
     app.include_router(stats.router, prefix=api_prefix)
+    app.include_router(reports.router, prefix=api_prefix)
 
     @app.get("/api/health", tags=["health"])
     def health():

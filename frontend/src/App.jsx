@@ -5,6 +5,7 @@ import AuthLayout from './layouts/AuthLayout';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import DriversPage from './pages/DriversPage';
+import CarsPage from './pages/CarsPage';
 import ProtectedRoute from './components/common/ProtectedRoute';
 
 export default function App() {
@@ -25,6 +26,7 @@ export default function App() {
       >
         <Route path="/" element={<HomePage />} />
         <Route path="/drivers" element={<DriversPage />} />
+        <Route path="/cars" element={<CarsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

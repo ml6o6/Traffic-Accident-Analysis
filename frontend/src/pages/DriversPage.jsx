@@ -15,6 +15,7 @@ export default function DriversPage() {
 
   const [editing, setEditing] = useState(null);
   const [deleting, setDeleting] = useState(null);
+  const [deleteError, setDeleteError] = useState(null);
 
   async function handleSubmit(payload) {
     if (editing && editing !== 'new') {
@@ -27,9 +28,19 @@ export default function DriversPage() {
   }
 
   async function handleDelete() {
-    await driversApi.deleteDriver(deleting.id);
+    try {
+      await driversApi.deleteDriver(deleting.id);
+      setDeleting(null);
+      setDeleteError(null);
+      refresh();
+    } catch (e) {
+      setDeleteError(e?.response?.data?.detail || e.message);
+    }
+  }
+
+  function closeDeleteModal() {
     setDeleting(null);
-    refresh();
+    setDeleteError(null);
   }
 
   return (
@@ -74,10 +85,11 @@ export default function DriversPage() {
 
       <ConfirmModal
         isOpen={!!deleting}
-        onClose={() => setDeleting(null)}
+        onClose={closeDeleteModal}
         onConfirm={handleDelete}
         title="Удалить водителя?"
         message={`Действие необратимо. Водитель «${deleting?.full_name || ''}» будет удалён.`}
+        error={deleteError}
       />
     </div>
   );

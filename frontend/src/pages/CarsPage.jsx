@@ -8,14 +8,15 @@ import Modal from '../components/common/Modal';
 import ConfirmModal from '../components/common/ConfirmModal';
 import { IconPlus } from '../components/common/Icons';
 
+// Страница для отображения списка автомобилей, фильтров и форм для создания/редактирования
 export default function CarsPage() {
   const { isAdmin } = useAuth();
   const [search, setSearch] = useState('');
   const { cars, loading, error, refresh } = useCars(search);
 
-  // editing: null — модалка закрыта; 'new' — создаём; объект — редактируем
   const [editing, setEditing] = useState(null);
   const [deleting, setDeleting] = useState(null);
+  const [deleteError, setDeleteError] = useState(null);
 
   async function handleSubmit(payload) {
     if (editing && editing !== 'new') {
@@ -28,9 +29,19 @@ export default function CarsPage() {
   }
 
   async function handleDelete() {
-    await carsApi.deleteCar(deleting.id);
+    try {
+      await carsApi.deleteCar(deleting.id);
+      setDeleting(null);
+      setDeleteError(null);
+      refresh();
+    } catch (e) {
+      setDeleteError(e?.response?.data?.detail || e.message);
+    }
+  }
+
+  function closeDeleteModal() {
     setDeleting(null);
-    refresh();
+    setDeleteError(null);
   }
 
   return (
@@ -75,10 +86,11 @@ export default function CarsPage() {
 
       <ConfirmModal
         isOpen={!!deleting}
-        onClose={() => setDeleting(null)}
+        onClose={closeDeleteModal}
         onConfirm={handleDelete}
         title="Удалить автомобиль?"
         message={`Действие необратимо. Автомобиль «${deleting?.reg_number || ''}» (${deleting?.brand_company || ''} ${deleting?.brand_model || ''}) будет удалён.`}
+        error={deleteError}
       />
     </div>
   );

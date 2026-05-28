@@ -18,9 +18,10 @@ export default function AccidentsPage() {
 
   const [editing, setEditing] = useState(null);
   const [deleting, setDeleting] = useState(null);
+  const [deleteError, setDeleteError] = useState(null);
 
-  // Для редактирования нужны полные данные (со списком cars), которые
-  // приходят только из GET /accidents/{id}, а не из списка.
+  
+  // При начале редактирования загружаем полные данные по ДТП, чтобы в форме были все поля
   async function startEdit(item) {
     try {
       const full = await accidentsApi.getAccident(item.id);
@@ -41,9 +42,19 @@ export default function AccidentsPage() {
   }
 
   async function handleDelete() {
-    await accidentsApi.deleteAccident(deleting.id);
+    try {
+      await accidentsApi.deleteAccident(deleting.id);
+      setDeleting(null);
+      setDeleteError(null);
+      refresh();
+    } catch (e) {
+      setDeleteError(e?.response?.data?.detail || e.message);
+    }
+  }
+
+  function closeDeleteModal() {
     setDeleting(null);
-    refresh();
+    setDeleteError(null);
   }
 
   return (
@@ -87,10 +98,11 @@ export default function AccidentsPage() {
 
       <ConfirmModal
         isOpen={!!deleting}
-        onClose={() => setDeleting(null)}
+        onClose={closeDeleteModal}
         onConfirm={handleDelete}
         title="Удалить акт ДТП?"
         message={`Действие необратимо. Акт «${deleting?.act_number || ''}» будет удалён.`}
+        error={deleteError}
       />
     </div>
   );

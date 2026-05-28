@@ -66,6 +66,12 @@ a:hover { text-decoration: underline; }
     line-height: 1.2;
     font-size: 0.88rem;
   }
+
+  /* В шапке icon-кнопки светлые на тёмном фоне */
+  .btn--icon {
+    color: rgba(255, 255, 255, 0.75);
+    &:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+  }
 }
 
 /* --- Avatar / role --- */
@@ -94,7 +100,27 @@ a:hover { text-decoration: underline; }
   max-width: 1280px;
   margin: 0 auto;
 
-  h1 { font-size: 1.5rem; margin-bottom: 12px; color: $color-primary; }
+  h1 { font-size: 1.5rem; color: $color-primary; }
+}
+.page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.page__actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.search {
+  padding: 8px 12px;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  font-size: 0.95rem;
+  min-width: 220px;
+  font-family: inherit;
+  &:focus { outline: 2px solid rgba(41, 128, 185, 0.3); border-color: $color-accent; }
 }
 
 /* --- Buttons --- */
@@ -115,14 +141,51 @@ a:hover { text-decoration: underline; }
   &:disabled { opacity: 0.6; cursor: not-allowed; }
 
   &--primary { background: $color-accent; color: #fff; border-color: $color-accent; }
+  &--danger  { background: $color-danger; color: #fff; border-color: $color-danger; }
+  &--ghost   { background: transparent; border-color: $color-border; }
   &--icon {
     padding: 6px;
     background: transparent;
     border-color: transparent;
-    color: rgba(255, 255, 255, 0.75);
-    &:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+    color: $color-muted;
+    &:hover { background: rgba(0, 0, 0, 0.06); color: $color-primary; }
+    &.btn--danger {
+      background: transparent;
+      border-color: transparent;
+      color: $color-danger;
+      &:hover { background: rgba(192, 57, 43, 0.1); color: $color-danger; }
+    }
   }
   &--full { width: 100%; justify-content: center; }
+}
+
+/* --- Tables --- */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: $color-card;
+  border-radius: $radius;
+  overflow: hidden;
+  box-shadow: $shadow;
+  th, td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid $color-border;
+    font-size: 0.9rem;
+  }
+  th {
+    background: #f8fafc;
+    font-weight: 600;
+    color: $color-primary;
+  }
+  tbody tr:hover { background: #f8fafc; }
+  td.actions {
+    white-space: nowrap;
+    text-align: right;
+    width: 1%;
+    .btn { vertical-align: middle; }
+    .btn + .btn { margin-left: 4px; }
+  }
 }
 
 /* --- Form --- */
@@ -131,6 +194,8 @@ a:hover { text-decoration: underline; }
   flex-direction: column;
   gap: 12px;
 
+  h3 { font-size: 1.15rem; color: $color-primary; margin-bottom: 4px; }
+
   label {
     display: flex;
     flex-direction: column;
@@ -138,14 +203,58 @@ a:hover { text-decoration: underline; }
     font-size: 0.85rem;
     color: $color-primary;
     span { font-weight: 500; }
-    input {
+    input, select, textarea {
       padding: 8px 10px;
       border: 1px solid $color-border;
       border-radius: $radius-sm;
       font-size: 0.95rem;
       font-family: inherit;
+      background: #fff;
       &:focus { outline: 2px solid rgba(41, 128, 185, 0.3); border-color: $color-accent; }
     }
+  }
+  &__actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 8px;
+  }
+}
+
+/* --- Modal --- */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+
+  &__content {
+    background: $color-card;
+    padding: 24px;
+    border-radius: $radius;
+    box-shadow: $shadow-strong;
+    width: 480px;
+    max-width: 100%;
+    max-height: calc(100vh - 64px);
+    overflow: auto;
+    position: relative;
+  }
+  &__close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: transparent;
+    border: none;
+    font-size: 1.6rem;
+    line-height: 1;
+    cursor: pointer;
+    color: $color-muted;
+    padding: 4px 8px;
+    &:hover { color: $color-primary; }
   }
 }
 
@@ -177,6 +286,14 @@ a:hover { text-decoration: underline; }
   padding: 8px 12px;
   border-radius: $radius-sm;
   font-size: 0.9rem;
+}
+.empty {
+  text-align: center;
+  padding: 32px;
+  color: $color-muted;
+  background: $color-card;
+  border-radius: $radius;
+  box-shadow: $shadow;
 }
 .loading {
   padding: 32px;

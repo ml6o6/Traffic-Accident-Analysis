@@ -221,6 +221,84 @@ a:hover { text-decoration: underline; }
   }
 }
 
+/* --- Badge --- */
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* --- Filters bar --- */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  background: $color-card;
+  padding: 12px 16px;
+  border-radius: $radius;
+  box-shadow: $shadow;
+  margin-bottom: 16px;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.8rem;
+    color: $color-primary;
+    span { font-weight: 500; }
+    input, select {
+      padding: 6px 10px;
+      border: 1px solid $color-border;
+      border-radius: $radius-sm;
+      font-size: 0.9rem;
+      font-family: inherit;
+      background: #fff;
+      min-width: 140px;
+      &:focus { outline: 2px solid rgba(41, 128, 185, 0.3); border-color: $color-accent; }
+    }
+  }
+}
+
+/* --- Multi-select (выбор нескольких машин-участников) --- */
+.multi-select {
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  padding: 10px 14px;
+  legend {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: $color-primary;
+    padding: 0 6px;
+  }
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 180px;
+    overflow-y: auto;
+  }
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    input { margin: 0; }
+  }
+}
+
+/* Две колонки внутри формы (например, широта/долгота) */
+.form__row {
+  display: flex;
+  gap: 12px;
+  label { flex: 1; }
+}
+
 /* --- Modal --- */
 .modal {
   position: fixed;

@@ -8,6 +8,7 @@ from ..schemas.stats import (
     DayStatRow,
     LocationStatRow,
     SummaryResponse,
+    DashboardResponse,
 )
 from ..services import stats_service
 from ..dependencies.auth import get_current_user
@@ -47,3 +48,8 @@ def by_location(
 @router.get("/summary", response_model=SummaryResponse)
 def summary(db: Session = Depends(get_db), _=Depends(get_current_user)):
     return stats_service.summary(db)
+
+
+@router.get("/dashboard", response_model=DashboardResponse)
+def dashboard(db: Session = Depends(get_db), _=Depends(get_current_user)):
+    return stats_service.dashboard(db)

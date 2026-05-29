@@ -22,4 +22,8 @@ export const statsApi = {
     const { data } = await api.get('/stats/summary');
     return data;
   },
+  async dashboard() {
+    const { data } = await api.get('/stats/dashboard');
+    return data;
+  },
 };

@@ -1,4 +1,3 @@
-//  Компонент для отображения статистики "Количество ДТП по дням месяца"
 import { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { statsApi } from '../../api/statsApi';
@@ -9,14 +8,13 @@ const MONTHS = [
   'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь',
 ];
 
-export default function AccidentsByDay() {
-  // По умолчанию показываем июнь 2025 (где лежат seed-данные)
+export default function AccidentsByDay({ filters }) {
   const [year, setYear] = useState(2025);
   const [month, setMonth] = useState(6);
 
   const { data, loading } = useStat(
-    () => statsApi.byDay(year, month),
-    [year, month],
+    () => statsApi.byDay(year, month, filters),
+    [year, month, JSON.stringify(filters)],
   );
 
   return (

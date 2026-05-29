@@ -6,40 +6,58 @@ from sqlalchemy.orm import Session
 from ..models.accident import Accident
 from ..models.driver import Driver
 
-#Количество ДТП по видам,  от частых к редким
-def by_type(db: Session) -> list[dict]:
-    rows = (
-        db.query(
-            Accident.accident_type.label("type"),
-            func.count(Accident.id).label("count"),
-        )
-        .group_by(Accident.accident_type)
-        .order_by(desc("count"))
-        .all()
+
+def _apply_filters(
+    q,
+    *,
+    date_from: date | None = None,
+    date_to: date | None = None,
+    location: str | None = None,
+    driver_id: int | None = None,
+    accident_type: str | None = None,
+):
+    """Применяет общие фильтры статистики к SQLAlchemy-запросу по Accident."""
+    if date_from:
+        q = q.filter(Accident.accident_date >= date_from)
+    if date_to:
+        q = q.filter(Accident.accident_date <= date_to)
+    if location:
+        q = q.filter(Accident.location.ilike(f"%{location}%"))
+    if driver_id:
+        q = q.filter(Accident.driver_id == driver_id)
+    if accident_type:
+        q = q.filter(Accident.accident_type == accident_type)
+    return q
+
+
+def by_type(db: Session, **filters) -> list[dict]:
+    q = db.query(
+        Accident.accident_type.label("type"),
+        func.count(Accident.id).label("count"),
     )
+    q = _apply_filters(q, **filters)
+    rows = q.group_by(Accident.accident_type).order_by(desc("count")).all()
     return [{"type": r.type, "count": r.count} for r in rows]
 
-#Количество ДТП по причинам, от частых к редким
-def by_cause(db: Session) -> list[dict]:
-    rows = (
-        db.query(
-            Accident.accident_cause.label("cause"),
-            func.count(Accident.id).label("count"),
-        )
-        .group_by(Accident.accident_cause)
-        .order_by(desc("count"))
-        .all()
+
+def by_cause(db: Session, **filters) -> list[dict]:
+    q = db.query(
+        Accident.accident_cause.label("cause"),
+        func.count(Accident.id).label("count"),
     )
+    q = _apply_filters(q, **filters)
+    rows = q.group_by(Accident.accident_cause).order_by(desc("count")).all()
     return [{"cause": r.cause, "count": r.count} for r in rows]
 
-#Количество ДТП за каждый день указанного месяца
-def by_day(db: Session, year: int, month: int) -> list[dict]:
+
+def by_day(db: Session, year: int, month: int, **filters) -> list[dict]:
+    q = db.query(
+        extract("day", Accident.accident_date).label("day"),
+        func.count(Accident.id).label("count"),
+    )
+    q = _apply_filters(q, **filters)
     rows = (
-        db.query(
-            extract("day", Accident.accident_date).label("day"),
-            func.count(Accident.id).label("count"),
-        )
-        .filter(extract("year", Accident.accident_date) == year)
+        q.filter(extract("year", Accident.accident_date) == year)
         .filter(extract("month", Accident.accident_date) == month)
         .group_by("day")
         .order_by("day")
@@ -47,37 +65,73 @@ def by_day(db: Session, year: int, month: int) -> list[dict]:
     )
     return [{"day": int(r.day), "count": r.count} for r in rows]
 
-#Топ-N мест по суммарному числу пострадавших
-def by_location(db: Session, limit: int = 10) -> list[dict]:
+
+def by_month(db: Session, **filters) -> list[dict]:
+    """Динамика по месяцам/годам — для графика тренда."""
+    q = db.query(
+        extract("year", Accident.accident_date).label("year"),
+        extract("month", Accident.accident_date).label("month"),
+        func.count(Accident.id).label("count"),
+    )
+    q = _apply_filters(q, **filters)
+    rows = q.group_by("year", "month").order_by("year", "month").all()
+    return [
+        {"year": int(r.year), "month": int(r.month), "count": r.count}
+        for r in rows
+    ]
+
+
+def by_severity(db: Session, **filters) -> list[dict]:
+    """Распределение по числу пострадавших с группировкой 4+."""
+    q = db.query(
+        Accident.victims_count.label("victims"),
+        func.count(Accident.id).label("count"),
+    )
+    q = _apply_filters(q, **filters)
+    rows = q.group_by(Accident.victims_count).order_by(Accident.victims_count).all()
+
+    buckets = {"0": 0, "1": 0, "2": 0, "3": 0, "4+": 0}
+    for r in rows:
+        v = r.victims
+        if v >= 4:
+            buckets["4+"] += r.count
+        else:
+            buckets[str(v)] += r.count
+    return [{"label": k, "count": v} for k, v in buckets.items()]
+
+
+def by_location(db: Session, limit: int = 10, **filters) -> list[dict]:
+    q = db.query(
+        Accident.location,
+        func.coalesce(func.sum(Accident.victims_count), 0).label("total_victims"),
+    )
+    q = _apply_filters(q, **filters)
     rows = (
-        db.query(
-            Accident.location,
-            func.coalesce(func.sum(Accident.victims_count), 0).label("total_victims"),
-        )
-        .group_by(Accident.location)
+        q.group_by(Accident.location)
         .order_by(desc("total_victims"))
         .limit(limit)
         .all()
     )
     return [{"location": r.location, "total_victims": int(r.total_victims)} for r in rows]
 
-#Сводка: всего ДТП, всего пострадавших, самый частый вид и причина
-def summary(db: Session) -> dict:
-    total_accidents = db.query(func.count(Accident.id)).scalar() or 0
-    total_victims = db.query(func.coalesce(func.sum(Accident.victims_count), 0)).scalar() or 0
 
-    top_type_row = (
-        db.query(Accident.accident_type, func.count(Accident.id).label("c"))
-        .group_by(Accident.accident_type)
-        .order_by(desc("c"))
-        .first()
+def summary(db: Session, **filters) -> dict:
+    q_count = _apply_filters(db.query(func.count(Accident.id)), **filters)
+    q_sum = _apply_filters(db.query(func.coalesce(func.sum(Accident.victims_count), 0)), **filters)
+    total_accidents = q_count.scalar() or 0
+    total_victims = q_sum.scalar() or 0
+
+    q_top_type = _apply_filters(
+        db.query(Accident.accident_type, func.count(Accident.id).label("c")),
+        **filters,
     )
-    top_cause_row = (
-        db.query(Accident.accident_cause, func.count(Accident.id).label("c"))
-        .group_by(Accident.accident_cause)
-        .order_by(desc("c"))
-        .first()
+    top_type_row = q_top_type.group_by(Accident.accident_type).order_by(desc("c")).first()
+
+    q_top_cause = _apply_filters(
+        db.query(Accident.accident_cause, func.count(Accident.id).label("c")),
+        **filters,
     )
+    top_cause_row = q_top_cause.group_by(Accident.accident_cause).order_by(desc("c")).first()
 
     return {
         "total_accidents": int(total_accidents),

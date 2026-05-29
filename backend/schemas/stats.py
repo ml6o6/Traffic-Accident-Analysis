@@ -24,6 +24,19 @@ class LocationStatRow(BaseModel):
     total_victims: int
 
 
+class MonthStatRow(BaseModel):
+    """Количество ДТП по месяцам (год + месяц)."""
+    year: int
+    month: int
+    count: int
+
+
+class SeverityStatRow(BaseModel):
+    """Распределение ДТП по числу пострадавших с группировкой 4+."""
+    label: str
+    count: int
+
+
 class SummaryResponse(BaseModel):
     total_accidents: int
     total_victims: int

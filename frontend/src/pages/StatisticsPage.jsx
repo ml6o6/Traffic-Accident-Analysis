@@ -1,18 +1,31 @@
+import { useState } from 'react';
 import { statsApi } from '../api/statsApi';
 import { useStat } from '../hooks/useStats';
+import StatsFilters from '../components/stats/StatsFilters';
 import AccidentsByType from '../components/charts/AccidentsByType';
 import AccidentsByCause from '../components/charts/AccidentsByCause';
 import AccidentsByDay from '../components/charts/AccidentsByDay';
+import AccidentsByMonth from '../components/charts/AccidentsByMonth';
+import SeverityDistribution from '../components/charts/SeverityDistribution';
 import VictimsByLocation from '../components/charts/VictimsByLocation';
 
 export default function StatisticsPage() {
-  const { data: summary } = useStat(statsApi.summary);
+  const [filters, setFilters] = useState({});
+  const filtersJson = JSON.stringify(filters);
+
+  const { data: summary } = useStat(() => statsApi.summary(filters), [filtersJson]);
 
   return (
     <div className="page">
       <h1>Статистика</h1>
 
-      {/* KPI-карточки */}
+      <StatsFilters
+        value={filters}
+        onChange={setFilters}
+        onReset={() => setFilters({})}
+      />
+
+      {/* KPI-карточки (тоже учитывают фильтры) */}
       <div className="kpi-grid">
         <div className="kpi">
           <div className="kpi__value">{summary?.total_accidents ?? '…'}</div>
@@ -32,23 +45,31 @@ export default function StatisticsPage() {
         </div>
       </div>
 
-      {/* Графики */}
+      {/* Графики (фильтры пробрасываются в каждый) */}
       <div className="charts-grid">
         <div className="chart-card">
           <h3>Распределение по виду ДТП</h3>
-          <AccidentsByType />
+          <AccidentsByType filters={filters} />
         </div>
         <div className="chart-card">
           <h3>Распределение по причинам</h3>
-          <AccidentsByCause />
+          <AccidentsByCause filters={filters} />
         </div>
-        <div className="chart-card chart-card--wide">
-          <h3>ДТП по дням месяца</h3>
-          <AccidentsByDay />
+        <div className="chart-card">
+          <h3>Распределение по тяжести (пострадавшие)</h3>
+          <SeverityDistribution filters={filters} />
         </div>
-        <div className="chart-card chart-card--wide">
+        <div className="chart-card">
           <h3>Топ-10 мест по числу пострадавших</h3>
-          <VictimsByLocation />
+          <VictimsByLocation filters={filters} />
+        </div>
+        <div className="chart-card chart-card--wide">
+          <h3>Динамика ДТП по месяцам</h3>
+          <AccidentsByMonth filters={filters} />
+        </div>
+        <div className="chart-card chart-card--wide">
+          <h3>ДТП по дням выбранного месяца</h3>
+          <AccidentsByDay filters={filters} />
         </div>
       </div>
     </div>

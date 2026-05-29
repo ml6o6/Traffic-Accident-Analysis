@@ -1,12 +1,14 @@
-// Компонент для отображения статистики "Количество ДТП по типам"
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { statsApi } from '../../api/statsApi';
 import { useStat } from '../../hooks/useStats';
 
 const COLORS = ['#e74c3c', '#e67e22', '#c0392b', '#8e44ad', '#2980b9', '#d35400', '#7f8c8d'];
 
-export default function AccidentsByType() {
-  const { data, loading } = useStat(statsApi.byType);
+export default function AccidentsByType({ filters }) {
+  const { data, loading } = useStat(
+    () => statsApi.byType(filters),
+    [JSON.stringify(filters)],
+  );
   if (loading) return <div className="muted">Загрузка…</div>;
   if (!data?.length) return <div className="muted">Нет данных</div>;
   return (
@@ -16,8 +18,7 @@ export default function AccidentsByType() {
           data={data}
           dataKey="count"
           nameKey="type"
-          cx="50%"
-          cy="50%"
+          cx="50%" cy="50%"
           outerRadius={100}
           label={(entry) => entry.count}
         >

@@ -510,6 +510,88 @@ a:hover { text-decoration: underline; }
   }
 }
 
+/* --- Map --- */
+.map-page {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 16px;
+  height: calc(100vh - 110px);
+}
+.map-page__sidebar {
+  background: $color-card;
+  border-radius: $radius;
+  box-shadow: $shadow;
+  padding: 16px;
+  overflow-y: auto;
+}
+.map-page__map {
+  background: $color-card;
+  border-radius: $radius;
+  box-shadow: $shadow;
+  overflow: hidden;
+}
+.map-wrapper {
+  width: 100%;
+  height: 100%;
+}
+.map-container {
+  width: 100%;
+  height: 100%;
+  min-height: 400px;
+}
+.map-error {
+  padding: 24px;
+  color: $color-danger;
+  text-align: center;
+}
+
+.map-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  h3 { font-size: 0.95rem; color: $color-primary; margin-bottom: 6px; }
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 0.8rem;
+    color: $color-primary;
+    span { font-weight: 500; }
+    input, select {
+      padding: 6px 10px;
+      border: 1px solid $color-border;
+      border-radius: $radius-sm;
+      font-size: 0.9rem;
+      font-family: inherit;
+      background: #fff;
+      &:focus { outline: 2px solid rgba(41, 128, 185, 0.3); border-color: $color-accent; }
+    }
+  }
+}
+
+.map-legend {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid $color-border;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: $color-text;
+
+  .dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: middle;
+    &--green { background: #5cb85c; }
+    &--orange { background: #f0ad4e; }
+    &--red { background: #d9534f; }
+  }
+}
+
 /* --- Misc --- */
 .muted { color: $color-muted; }
 .error {

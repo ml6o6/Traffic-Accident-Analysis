@@ -1,21 +1,34 @@
 import { useAuth } from '../../hooks/useAuth';
 import { IconEdit, IconTrash } from '../common/Icons';
-// Компонент для отображения списка водителей
-export default function DriverList({ drivers, onEdit, onDelete }) {
+
+// Компонент для отображения списка водителей с сортируемыми заголовками
+export default function DriverList({ drivers, onEdit, onDelete, sort, toggleSort }) {
   const { isAdmin } = useAuth();
   if (!drivers.length) {
     return <div className="empty">Водители не найдены</div>;
   }
+
+  function Th({ label, field }) {
+    if (!toggleSort) return <th>{label}</th>;
+    const active = sort?.field === field;
+    const arrow = active ? (sort.dir === 'asc' ? ' ▲' : ' ▼') : '';
+    return (
+      <th className="sortable" onClick={() => toggleSort(field)}>
+        {label}{arrow}
+      </th>
+    );
+  }
+
   return (
     <table className="data-table">
       <thead>
         <tr>
-          <th>ФИО</th>
-          <th>Стаж</th>
-          <th>Гос. номер</th>
-          <th>№ удостоверения</th>
-          <th>Дата выдачи</th>
-          <th>№ акта</th>
+          <Th label="ФИО" field="full_name" />
+          <Th label="Стаж" field="experience" />
+          <Th label="Гос. номер" field="car_reg_number" />
+          <Th label="№ удостоверения" field="license_number" />
+          <Th label="Дата выдачи" field="license_date" />
+          <Th label="№ акта" field="act_number" />
           {isAdmin && <th>Действия</th>}
         </tr>
       </thead>
@@ -30,18 +43,10 @@ export default function DriverList({ drivers, onEdit, onDelete }) {
             <td>{d.act_number || '—'}</td>
             {isAdmin && (
               <td className="actions">
-                <button
-                  className="btn btn--icon"
-                  onClick={() => onEdit(d)}
-                  title="Изменить"
-                >
+                <button className="btn btn--icon" onClick={() => onEdit(d)} title="Изменить">
                   <IconEdit />
                 </button>
-                <button
-                  className="btn btn--icon btn--danger"
-                  onClick={() => onDelete(d)}
-                  title="Удалить"
-                >
+                <button className="btn btn--icon btn--danger" onClick={() => onDelete(d)} title="Удалить">
                   <IconTrash />
                 </button>
               </td>

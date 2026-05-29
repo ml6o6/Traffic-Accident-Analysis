@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { carsApi } from '../../api/carsApi';
 import { driversApi } from '../../api/driversApi';
 
@@ -28,12 +28,26 @@ const EMPTY = {
   car_reg_numbers: [],
 };
 
-export default function AccidentForm({ initial, onSubmit, onCancel }) {
+function buildBaseline(initial) {
+  if (!initial) return EMPTY;
+  return {
+    ...EMPTY,
+    ...initial,
+    driver_id: initial.driver_id ?? '',
+    car_reg_number: initial.car_reg_number || '',
+    latitude: initial.latitude ?? '',
+    longitude: initial.longitude ?? '',
+    car_reg_numbers: initial.cars || [],
+  };
+}
+
+export default function AccidentForm({ initial, onSubmit, onCancel, onDirtyChange }) {
   const [form, setForm] = useState(EMPTY);
   const [cars, setCars] = useState([]);
   const [drivers, setDrivers] = useState([]);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
+  const baselineRef = useRef(EMPTY);
 
   useEffect(() => {
     carsApi.getCars().then(setCars).catch(() => setCars([]));
@@ -41,20 +55,19 @@ export default function AccidentForm({ initial, onSubmit, onCancel }) {
   }, []);
 
   useEffect(() => {
-    if (initial) {
-      setForm({
-        ...EMPTY,
-        ...initial,
-        driver_id: initial.driver_id ?? '',
-        car_reg_number: initial.car_reg_number || '',
-        latitude: initial.latitude ?? '',
-        longitude: initial.longitude ?? '',
-        car_reg_numbers: initial.cars || [],
-      });
-    } else {
-      setForm(EMPTY);
-    }
+    const baseline = buildBaseline(initial);
+    baselineRef.current = baseline;
+    setForm(baseline);
+    onDirtyChange?.(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initial]);
+
+  useEffect(() => {
+    if (!onDirtyChange) return;
+    const dirty = JSON.stringify(form) !== JSON.stringify(baselineRef.current);
+    onDirtyChange(dirty);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form]);
 
   function change(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -85,6 +98,7 @@ export default function AccidentForm({ initial, onSubmit, onCancel }) {
         victims_count: Number(form.victims_count) || 0,
       };
       await onSubmit(payload);
+      onDirtyChange?.(false);
       setError(null);
     } catch (e) {
       setError(e?.response?.data?.detail || e.message);

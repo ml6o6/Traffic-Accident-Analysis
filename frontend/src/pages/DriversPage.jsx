@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useDrivers } from '../hooks/useDrivers';
+import { useSortable } from '../hooks/useSortable';
+import { usePagination } from '../hooks/usePagination';
 import { driversApi } from '../api/driversApi';
 import DriverList from '../components/drivers/DriverList';
 import DriverForm from '../components/drivers/DriverForm';
 import Modal from '../components/common/Modal';
 import ConfirmModal from '../components/common/ConfirmModal';
+import Pagination from '../components/common/Pagination';
 import { IconPlus } from '../components/common/Icons';
 
 export default function DriversPage() {
@@ -13,9 +16,14 @@ export default function DriversPage() {
   const [search, setSearch] = useState('');
   const { drivers, loading, error, refresh } = useDrivers(search);
 
+  // Сортировка → пагинация
+  const { sortedItems, sort, toggleSort } = useSortable(drivers, 'id');
+  const { pageItems, page, setPage, totalPages } = usePagination(sortedItems, 20);
+
   const [editing, setEditing] = useState(null);
   const [deleting, setDeleting] = useState(null);
   const [deleteError, setDeleteError] = useState(null);
+  const [formDirty, setFormDirty] = useState(false);
 
   async function handleSubmit(payload) {
     if (editing && editing !== 'new') {
@@ -24,7 +32,16 @@ export default function DriversPage() {
       await driversApi.createDriver(payload);
     }
     setEditing(null);
+    setFormDirty(false);
     refresh();
+  }
+
+  function closeEditModal() {
+    if (formDirty && !window.confirm('Несохранённые изменения будут потеряны. Закрыть форму?')) {
+      return;
+    }
+    setEditing(null);
+    setFormDirty(false);
   }
 
   async function handleDelete() {
@@ -68,18 +85,24 @@ export default function DriversPage() {
       {loading ? (
         <div className="loading">Загрузка…</div>
       ) : (
-        <DriverList
-          drivers={drivers}
-          onEdit={(d) => setEditing(d)}
-          onDelete={(d) => setDeleting(d)}
-        />
+        <>
+          <DriverList
+            drivers={pageItems}
+            sort={sort}
+            toggleSort={toggleSort}
+            onEdit={(d) => setEditing(d)}
+            onDelete={(d) => setDeleting(d)}
+          />
+          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+        </>
       )}
 
-      <Modal isOpen={!!editing} onClose={() => setEditing(null)}>
+      <Modal isOpen={!!editing} onClose={closeEditModal}>
         <DriverForm
           initial={editing === 'new' ? null : editing}
           onSubmit={handleSubmit}
-          onCancel={() => setEditing(null)}
+          onCancel={closeEditModal}
+          onDirtyChange={setFormDirty}
         />
       </Modal>
 

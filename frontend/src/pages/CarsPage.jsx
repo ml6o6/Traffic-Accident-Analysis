@@ -1,22 +1,28 @@
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useCars } from '../hooks/useCars';
+import { useSortable } from '../hooks/useSortable';
+import { usePagination } from '../hooks/usePagination';
 import { carsApi } from '../api/carsApi';
 import CarList from '../components/cars/CarList';
 import CarForm from '../components/cars/CarForm';
 import Modal from '../components/common/Modal';
 import ConfirmModal from '../components/common/ConfirmModal';
+import Pagination from '../components/common/Pagination';
 import { IconPlus } from '../components/common/Icons';
 
-// Страница для отображения списка автомобилей, фильтров и форм для создания/редактирования
 export default function CarsPage() {
   const { isAdmin } = useAuth();
   const [search, setSearch] = useState('');
   const { cars, loading, error, refresh } = useCars(search);
 
+  const { sortedItems, sort, toggleSort } = useSortable(cars, 'id');
+  const { pageItems, page, setPage, totalPages } = usePagination(sortedItems, 20);
+
   const [editing, setEditing] = useState(null);
   const [deleting, setDeleting] = useState(null);
   const [deleteError, setDeleteError] = useState(null);
+  const [formDirty, setFormDirty] = useState(false);
 
   async function handleSubmit(payload) {
     if (editing && editing !== 'new') {
@@ -25,7 +31,16 @@ export default function CarsPage() {
       await carsApi.createCar(payload);
     }
     setEditing(null);
+    setFormDirty(false);
     refresh();
+  }
+
+  function closeEditModal() {
+    if (formDirty && !window.confirm('Несохранённые изменения будут потеряны. Закрыть форму?')) {
+      return;
+    }
+    setEditing(null);
+    setFormDirty(false);
   }
 
   async function handleDelete() {
@@ -69,18 +84,24 @@ export default function CarsPage() {
       {loading ? (
         <div className="loading">Загрузка…</div>
       ) : (
-        <CarList
-          cars={cars}
-          onEdit={(c) => setEditing(c)}
-          onDelete={(c) => setDeleting(c)}
-        />
+        <>
+          <CarList
+            cars={pageItems}
+            sort={sort}
+            toggleSort={toggleSort}
+            onEdit={(c) => setEditing(c)}
+            onDelete={(c) => setDeleting(c)}
+          />
+          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+        </>
       )}
 
-      <Modal isOpen={!!editing} onClose={() => setEditing(null)}>
+      <Modal isOpen={!!editing} onClose={closeEditModal}>
         <CarForm
           initial={editing === 'new' ? null : editing}
           onSubmit={handleSubmit}
-          onCancel={() => setEditing(null)}
+          onCancel={closeEditModal}
+          onDirtyChange={setFormDirty}
         />
       </Modal>
 

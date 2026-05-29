@@ -1,27 +1,30 @@
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useAccidents } from '../hooks/useAccidents';
+import { useSortable } from '../hooks/useSortable';
+import { usePagination } from '../hooks/usePagination';
 import { accidentsApi } from '../api/accidentsApi';
 import AccidentList from '../components/accidents/AccidentList';
 import AccidentFilters from '../components/accidents/AccidentFilters';
 import AccidentForm from '../components/accidents/AccidentForm';
 import Modal from '../components/common/Modal';
 import ConfirmModal from '../components/common/ConfirmModal';
+import Pagination from '../components/common/Pagination';
 import { IconPlus } from '../components/common/Icons';
 
-
-// Страница для отображения списка ДТП, фильтров и форм для создания/редактирования
 export default function AccidentsPage() {
   const { isAdmin } = useAuth();
   const [filters, setFilters] = useState({});
   const { accidents, loading, error, refresh } = useAccidents(filters);
 
+  const { sortedItems, sort, toggleSort } = useSortable(accidents, 'id');
+  const { pageItems, page, setPage, totalPages } = usePagination(sortedItems, 20);
+
   const [editing, setEditing] = useState(null);
   const [deleting, setDeleting] = useState(null);
   const [deleteError, setDeleteError] = useState(null);
+  const [formDirty, setFormDirty] = useState(false);
 
-  
-  // При начале редактирования загружаем полные данные по ДТП, чтобы в форме были все поля
   async function startEdit(item) {
     try {
       const full = await accidentsApi.getAccident(item.id);
@@ -38,7 +41,16 @@ export default function AccidentsPage() {
       await accidentsApi.createAccident(payload);
     }
     setEditing(null);
+    setFormDirty(false);
     refresh();
+  }
+
+  function closeEditModal() {
+    if (formDirty && !window.confirm('Несохранённые изменения будут потеряны. Закрыть форму?')) {
+      return;
+    }
+    setEditing(null);
+    setFormDirty(false);
   }
 
   async function handleDelete() {
@@ -71,28 +83,30 @@ export default function AccidentsPage() {
         </div>
       </div>
 
-      <AccidentFilters
-        value={filters}
-        onChange={setFilters}
-        onReset={() => setFilters({})}
-      />
+      <AccidentFilters value={filters} onChange={setFilters} onReset={() => setFilters({})} />
 
       {error && <div className="error">{error}</div>}
       {loading ? (
         <div className="loading">Загрузка…</div>
       ) : (
-        <AccidentList
-          accidents={accidents}
-          onEdit={startEdit}
-          onDelete={(a) => setDeleting(a)}
-        />
+        <>
+          <AccidentList
+            accidents={pageItems}
+            sort={sort}
+            toggleSort={toggleSort}
+            onEdit={startEdit}
+            onDelete={(a) => setDeleting(a)}
+          />
+          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+        </>
       )}
 
-      <Modal isOpen={!!editing} onClose={() => setEditing(null)}>
+      <Modal isOpen={!!editing} onClose={closeEditModal}>
         <AccidentForm
           initial={editing === 'new' ? null : editing}
           onSubmit={handleSubmit}
-          onCancel={() => setEditing(null)}
+          onCancel={closeEditModal}
+          onDirtyChange={setFormDirty}
         />
       </Modal>
 

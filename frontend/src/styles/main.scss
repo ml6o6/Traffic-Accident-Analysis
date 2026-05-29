@@ -432,6 +432,84 @@ a:hover { text-decoration: underline; }
   }
 }
 
+/* --- Statistics: KPI cards --- */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.kpi {
+  background: $color-card;
+  border-radius: $radius;
+  box-shadow: $shadow;
+  padding: 18px 20px;
+
+  &__value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: $color-primary;
+    line-height: 1.1;
+    margin-bottom: 6px;
+    &--small { font-size: 1rem; }
+  }
+  &__label {
+    color: $color-muted;
+    font-size: 0.85rem;
+  }
+}
+
+/* --- Statistics: graphs grid --- */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  @media (min-width: 1100px) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.chart-card {
+  background: $color-card;
+  border-radius: $radius;
+  box-shadow: $shadow;
+  padding: 16px 20px;
+
+  h3 {
+    font-size: 1rem;
+    color: $color-primary;
+    margin-bottom: 12px;
+  }
+
+  &--wide {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Controls внутри chart-card (для AccidentsByDay) */
+.chart-controls {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.8rem;
+    color: $color-primary;
+    span { font-weight: 500; }
+    input, select {
+      padding: 6px 10px;
+      border: 1px solid $color-border;
+      border-radius: $radius-sm;
+      font-size: 0.9rem;
+      font-family: inherit;
+      background: #fff;
+      &:focus { outline: 2px solid rgba(41, 128, 185, 0.3); border-color: $color-accent; }
+    }
+  }
+}
+
 /* --- Misc --- */
 .muted { color: $color-muted; }
 .error {

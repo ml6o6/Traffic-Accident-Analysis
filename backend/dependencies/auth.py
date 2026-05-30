@@ -12,6 +12,10 @@ from ..db import get_db
 from ..models.user import User, UserRole
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+# Опциональная схема: токен не обязателен. Нужна для эндпоинтов,
+# доступных и гостям (карта, статистика), которые при наличии токена
+# могут отдавать расширенные поля (ФИО водителя и т. п.).
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
 
 
 def hash_password(password: str) -> str:
@@ -56,6 +60,27 @@ def get_current_user(
     user = db.query(User).filter(User.username == username).first()
     if not user or not user.is_active:
         raise cred_exc
+    return user
+
+
+def get_current_user_optional(
+    token: Annotated[str | None, Depends(oauth2_scheme_optional)],
+    db: Annotated[Session, Depends(get_db)],
+) -> User | None:
+    """FastAPI-зависимость: вернёт пользователя при валидном токене или None,
+    если токен отсутствует/невалиден. Не бросает 401 — нужна для публичных эндпоинтов."""
+    if not token:
+        return None
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        username: str | None = payload.get("sub")
+        if not username:
+            return None
+    except JWTError:
+        return None
+    user = db.query(User).filter(User.username == username).first()
+    if not user or not user.is_active:
+        return None
     return user
 
 

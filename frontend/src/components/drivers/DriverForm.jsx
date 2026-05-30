@@ -1,5 +1,7 @@
+// Форма создания/редактирования водителя
 import { useEffect, useRef, useState } from 'react';
 import { carsApi } from '../../api/carsApi';
+import SearchableSelect from '../common/SearchableSelect';
 
 const EMPTY = {
   full_name: '',
@@ -86,14 +88,15 @@ export default function DriverForm({ initial, onSubmit, onCancel, onDirtyChange 
       </label>
       <label>
         <span>Автомобиль</span>
-        <select value={form.car_reg_number} onChange={(e) => change('car_reg_number', e.target.value)}>
-          <option value="">— не выбрано —</option>
-          {cars.map((c) => (
-            <option key={c.id} value={c.reg_number}>
-              {c.reg_number} — {c.brand_company} {c.brand_model}
-            </option>
-          ))}
-        </select>
+        <SearchableSelect
+          options={cars.map((c) => ({
+            value: c.reg_number,
+            label: `${c.reg_number} — ${c.brand_company} ${c.brand_model}`,
+          }))}
+          value={form.car_reg_number}
+          onChange={(v) => change('car_reg_number', v)}
+          placeholder="— не выбрано —"
+        />
       </label>
       <label>
         <span>№ удостоверения</span>

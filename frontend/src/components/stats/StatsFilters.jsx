@@ -1,12 +1,14 @@
+// Панель фильтров для страницы Статистика. Позволяет выбрать период, место, водителя
+//  и тип ДТП для отображения на графиках и в таблице.
 import { useEffect, useState } from 'react';
 import { driversApi } from '../../api/driversApi';
+import SearchableSelect from '../common/SearchableSelect';
 
 const TYPES = [
   'Наезд на пешехода', 'Наезд на препятствие', 'Столкновение',
   'Опрокидывание', 'Съезд с дороги', 'Наезд на велосипедиста', 'Прочее',
 ];
 
-// Общая панель фильтров для страницы Статистика: дата, место, водитель, тип
 export default function StatsFilters({ value, onChange, onReset }) {
   const [drivers, setDrivers] = useState([]);
 
@@ -45,17 +47,17 @@ export default function StatsFilters({ value, onChange, onReset }) {
           onChange={(e) => set('location', e.target.value)}
         />
       </label>
-      <label>
+      <label style={{ minWidth: 220 }}>
         <span>Водитель</span>
-        <select
-          value={v.driver_id || ''}
-          onChange={(e) => set('driver_id', e.target.value)}
-        >
-          <option value="">Все</option>
-          {drivers.map((d) => (
-            <option key={d.id} value={d.id}>{d.full_name}</option>
-          ))}
-        </select>
+        <SearchableSelect
+          options={drivers.map((d) => ({
+            value: String(d.id),
+            label: `${d.full_name} — ${d.license_number}`,
+          }))}
+          value={v.driver_id ? String(v.driver_id) : ''}
+          onChange={(val) => set('driver_id', val || '')}
+          placeholder="Все"
+        />
       </label>
       <label>
         <span>Вид ДТП</span>

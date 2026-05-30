@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { carsApi } from '../../api/carsApi';
 import { driversApi } from '../../api/driversApi';
+import SearchableSelect from '../common/SearchableSelect';
 
 // Компонент для отображения формы создания/редактирования ДТП
 const TYPES = [
@@ -73,18 +74,6 @@ export default function AccidentForm({ initial, onSubmit, onCancel, onDirtyChang
     setForm((f) => ({ ...f, [field]: value }));
   }
 
-  function toggleCarParticipant(reg) {
-    setForm((f) => {
-      const has = f.car_reg_numbers.includes(reg);
-      return {
-        ...f,
-        car_reg_numbers: has
-          ? f.car_reg_numbers.filter((r) => r !== reg)
-          : [...f.car_reg_numbers, reg],
-      };
-    });
-  }
-
   async function submit(e) {
     e.preventDefault();
     setSaving(true);
@@ -130,30 +119,27 @@ export default function AccidentForm({ initial, onSubmit, onCancel, onDirtyChang
       </label>
       <label>
         <span>Водитель</span>
-        <select
-          required
-          value={form.driver_id}
-          onChange={(e) => change('driver_id', e.target.value)}
-        >
-          <option value="">— выберите —</option>
-          {drivers.map((d) => (
-            <option key={d.id} value={d.id}>{d.full_name}</option>
-          ))}
-        </select>
+        <SearchableSelect
+          options={drivers.map((d) => ({
+            value: String(d.id),
+            label: `${d.full_name} — ${d.license_number}`,
+          }))}
+          value={form.driver_id !== '' ? String(form.driver_id) : ''}
+          onChange={(v) => change('driver_id', v ? Number(v) : '')}
+          placeholder="— выберите —"
+        />
       </label>
       <label>
         <span>Основной автомобиль</span>
-        <select
+        <SearchableSelect
+          options={cars.map((c) => ({
+            value: c.reg_number,
+            label: `${c.reg_number} — ${c.brand_company} ${c.brand_model}`,
+          }))}
           value={form.car_reg_number}
-          onChange={(e) => change('car_reg_number', e.target.value)}
-        >
-          <option value="">— не выбрано —</option>
-          {cars.map((c) => (
-            <option key={c.id} value={c.reg_number}>
-              {c.reg_number} — {c.brand_company} {c.brand_model}
-            </option>
-          ))}
-        </select>
+          onChange={(v) => change('car_reg_number', v)}
+          placeholder="— не выбрано —"
+        />
       </label>
       <label>
         <span>Дата ДТП</span>
@@ -220,23 +206,21 @@ export default function AccidentForm({ initial, onSubmit, onCancel, onDirtyChang
         </select>
       </label>
 
-      {/* M:N — список машин-участников */}
-      <fieldset className="multi-select">
-        <legend>Машины-участники ({form.car_reg_numbers.length})</legend>
-        <div className="multi-select__list">
-          {cars.length === 0 && <div className="muted">Сначала добавьте автомобили</div>}
-          {cars.map((c) => (
-            <label key={c.id} className="multi-select__item">
-              <input
-                type="checkbox"
-                checked={form.car_reg_numbers.includes(c.reg_number)}
-                onChange={() => toggleCarParticipant(c.reg_number)}
-              />
-              <span>{c.reg_number} — {c.brand_company} {c.brand_model}</span>
-            </label>
-          ))}
-        </div>
-      </fieldset>
+      {/* M:N — машины-участники: поиск + мультивыбор */}
+      <label>
+        <span>Машины-участники ({form.car_reg_numbers.length})</span>
+        <SearchableSelect
+          isMulti
+          options={cars.map((c) => ({
+            value: c.reg_number,
+            label: `${c.reg_number} — ${c.brand_company} ${c.brand_model}`,
+          }))}
+          value={form.car_reg_numbers}
+          onChange={(v) => change('car_reg_numbers', v)}
+          placeholder={cars.length === 0 ? 'Сначала добавьте автомобили' : 'Найдите и выберите машины…'}
+          isDisabled={cars.length === 0}
+        />
+      </label>
 
       {error && <div className="error">{error}</div>}
       <div className="form__actions">

@@ -11,7 +11,9 @@ import StatisticsPage from './pages/StatisticsPage';
 import MapPage from './pages/MapPage';
 import ProtectedRoute from './components/common/ProtectedRoute';
 
-// Главный компонент приложения, который задаёт маршрутизацию и общую структуру страниц
+// Главный компонент приложения. Доступ к страницам:
+// - Публичные (Главная, Статистика, Карта) — без аутентификации;
+// - Админские (Водители, Авто, ДТП, Отчёты) — требуют входа под admin.
 export default function App() {
   return (
     <Routes>
@@ -20,21 +22,47 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
       </Route>
 
-      {/* Защищённая часть: всё за ProtectedRoute */}
-      <Route
-        element={
-          <ProtectedRoute>
-            <MainLayout />
-          </ProtectedRoute>
-        }
-      >
+      {/* Основная разметка — доступна всем, конкретные страницы могут быть закрыты */}
+      <Route element={<MainLayout />}>
+        {/* Публичные страницы аналитики */}
         <Route path="/" element={<HomePage />} />
-        <Route path="/drivers" element={<DriversPage />} />
-        <Route path="/cars" element={<CarsPage />} />
-        <Route path="/accidents" element={<AccidentsPage />} />
-        <Route path="/reports" element={<ReportsPage />} />
         <Route path="/statistics" element={<StatisticsPage />} />
         <Route path="/map" element={<MapPage />} />
+
+        {/* Админские страницы — ведение справочников и оформление актов */}
+        <Route
+          path="/drivers"
+          element={
+            <ProtectedRoute adminOnly>
+              <DriversPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/cars"
+          element={
+            <ProtectedRoute adminOnly>
+              <CarsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accidents"
+          element={
+            <ProtectedRoute adminOnly>
+              <AccidentsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports"
+          element={
+            <ProtectedRoute adminOnly>
+              <ReportsPage />
+            </ProtectedRoute>
+          }
+        />
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

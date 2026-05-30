@@ -2,6 +2,7 @@
 //  и тип ДТП для отображения на графиках и в таблице.
 import { useEffect, useState } from 'react';
 import { driversApi } from '../../api/driversApi';
+import { useAuth } from '../../hooks/useAuth';
 import SearchableSelect from '../common/SearchableSelect';
 
 const TYPES = [
@@ -10,11 +11,15 @@ const TYPES = [
 ];
 
 export default function StatsFilters({ value, onChange, onReset }) {
+  const { isAdmin } = useAuth();
   const [drivers, setDrivers] = useState([]);
 
+  // Список водителей — закрытые данные, подгружаем только для админа.
+  // Для гостей фильтр «Водитель» не показывается.
   useEffect(() => {
+    if (!isAdmin) return;
     driversApi.getDrivers().then(setDrivers).catch(() => setDrivers([]));
-  }, []);
+  }, [isAdmin]);
 
   const v = value || {};
   function set(field, val) {
@@ -47,18 +52,20 @@ export default function StatsFilters({ value, onChange, onReset }) {
           onChange={(e) => set('location', e.target.value)}
         />
       </label>
-      <label style={{ minWidth: 220 }}>
-        <span>Водитель</span>
-        <SearchableSelect
-          options={drivers.map((d) => ({
-            value: String(d.id),
-            label: `${d.full_name} — ${d.license_number}`,
-          }))}
-          value={v.driver_id ? String(v.driver_id) : ''}
-          onChange={(val) => set('driver_id', val || '')}
-          placeholder="Все"
-        />
-      </label>
+      {isAdmin && (
+        <label style={{ minWidth: 220 }}>
+          <span>Водитель</span>
+          <SearchableSelect
+            options={drivers.map((d) => ({
+              value: String(d.id),
+              label: `${d.full_name} — ${d.license_number}`,
+            }))}
+            value={v.driver_id ? String(v.driver_id) : ''}
+            onChange={(val) => set('driver_id', val || '')}
+            placeholder="Все"
+          />
+        </label>
+      )}
       <label>
         <span>Вид ДТП</span>
         <select

@@ -12,7 +12,12 @@ from ..schemas.accident import (
     AccidentMapPoint,
 )
 from ..services import accident_service
-from ..dependencies.auth import get_current_user, require_admin
+from ..dependencies.auth import (
+    get_current_user,
+    get_current_user_optional,
+    require_admin,
+)
+from ..models.user import User, UserRole
 
 router = APIRouter(prefix="/accidents", tags=["accidents"])
 
@@ -73,9 +78,22 @@ def get_map_points(
     accident_type: str | None = None,
     location: str | None = None,
     db: Session = Depends(get_db),
-    _=Depends(get_current_user),
+    user: User | None = Depends(get_current_user_optional),
 ):
-    return accident_service.map_points(db, date_from, date_to, accident_type, location)
+    """Публичный эндпоинт. Для гостей скрываем ФИО водителя и гос. номер
+    (персональные данные), оставляя только агрегатно-публичные поля."""
+    points = accident_service.map_points(db, date_from, date_to, accident_type, location)
+    is_admin = bool(user and user.role == UserRole.admin)
+    if not is_admin:
+        for p in points:
+            # accident_service может вернуть как dict-like, так и Pydantic-объект
+            if hasattr(p, "__setitem__"):
+                p["driver_name"] = None
+                p["car_reg_number"] = None
+            else:
+                p.driver_name = None
+                p.car_reg_number = None
+    return points
 
 
 @router.get("/{accident_id}", response_model=AccidentResponse)

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useLocation, Navigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
 export default function LoginPage() {
@@ -36,7 +36,6 @@ export default function LoginPage() {
   return (
     <div className="login">
       <h1>Система анализа ДТП</h1>
-      <p className="muted">Войдите, чтобы продолжить</p>
       <form className="form" onSubmit={handleSubmit}>
         <label>
           <span>Логин</span>
@@ -66,6 +65,9 @@ export default function LoginPage() {
           {submitting ? 'Вход…' : 'Войти'}
         </button>
       </form>
+      <p className="muted" style={{ marginTop: 16, textAlign: 'center' }}>
+        <Link to="/">← Продолжить как гость</Link>
+      </p>
     </div>
   );
 }

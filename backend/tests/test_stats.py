@@ -1,6 +1,6 @@
 import pytest
 
-#"""Создаёт авто, водителя и 5 ДТП: 3 столкновения, 2 наезда на пешехода, в июне 2025.
+# Тесты для аналитических эндпоинтов. Проверяем, что они работают, возвращают правильные данные и не раскрывают лишнюю информацию гостям.
 @pytest.fixture
 def seeded(client, admin_headers):
     client.post(
@@ -49,9 +49,22 @@ def seeded(client, admin_headers):
         assert r.status_code == 201, r.text
 
 
-def test_stats_requires_auth(client):
+def test_stats_is_public(client, seeded):
+    """Аналитические сводки публичны: доступ без токена должен работать."""
     r = client.get("/api/stats/summary")
-    assert r.status_code == 401
+    assert r.status_code == 200
+    assert "total_accidents" in r.json()
+
+
+def test_map_points_public_without_pii(client, seeded):
+    """Карта публична, но ФИО водителя и гос. номер скрыты для гостя."""
+    r = client.get("/api/accidents/map-points")
+    assert r.status_code == 200
+    points = r.json()
+    assert points, "map-points должен вернуть хоть одну точку"
+    for p in points:
+        assert p["driver_name"] is None
+        assert p["car_reg_number"] is None
 
 
 def test_by_type(client, user_headers, seeded):
